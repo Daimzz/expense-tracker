@@ -1,11 +1,13 @@
-import {users} from '../dummyData/data.js'
+import Transaction from "../models/transaction.model.js";
 import User from "../models/user.model.js";
+import bcrypt from "bcryptjs";
 
 const userResolver = {
 	Mutation: {
-		signUp: async(_, {input}, context) => {
+		signUp: async (_, { input }, context) => {
 			try {
-			  const {username,password, name, gender} = input
+				const { username, name, password, gender } = input;
+
 				if (!username || !name || !password || !gender) {
 					throw new Error("All fields are required");
 				}
@@ -16,6 +18,7 @@ const userResolver = {
 
 				const salt = await bcrypt.genSalt(10);
 				const hashedPassword = await bcrypt.hash(password, salt);
+
 				// https://avatar-placeholder.iran.liara.run/
 				const boyProfilePic = `https://avatar.iran.liara.run/public/boy?username=${username}`;
 				const girlProfilePic = `https://avatar.iran.liara.run/public/girl?username=${username}`;
@@ -31,12 +34,12 @@ const userResolver = {
 				await newUser.save();
 				await context.login(newUser);
 				return newUser;
-
-			} catch(err){
+			} catch (err) {
 				console.error("Error in signUp: ", err);
 				throw new Error(err.message || "Internal server error");
 			}
 		},
+
 		login: async (_, { input }, context) => {
 			try {
 				const { username, password } = input;
@@ -97,4 +100,5 @@ const userResolver = {
 		},
 	},
 };
-export default userResolver
+
+export default userResolver;
