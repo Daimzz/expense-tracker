@@ -15,8 +15,8 @@ export const CREATE_TRANSACTION = gql`
 `;
 
 export const UPDATE_TRANSACTION = gql`
-	mutation UpdateTransaction($input: UpdateTransactionInput!) {
-		updateTransaction(input: $input) {
+  mutation UpdateTransaction($input: UpdateTransactionInput!) {
+	  updateTransaction(input: $input) {
 			_id
 			description
 			paymentType
@@ -25,8 +25,10 @@ export const UPDATE_TRANSACTION = gql`
 			location
 			date
 		}
-	}
-`;
+  }
+`
+
+
 export const DELETE_TRANSACTION = gql`
 	mutation DeleteTransaction($transactionId: ID!) {
 		deleteTransaction(transactionId: $transactionId) {
@@ -40,3 +42,6 @@ export const DELETE_TRANSACTION = gql`
 		}
 	}
 `;
+
+
+

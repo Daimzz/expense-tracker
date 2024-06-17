@@ -12,6 +12,7 @@ import {LOGOUT} from "../graphql/mutations/user.mutation.js";
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 const HomePage = () => {
+
 	const chartData = {
 		labels: ["Saving", "Expense", "Investment"],
 		datasets: [
