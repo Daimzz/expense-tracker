@@ -8,34 +8,91 @@ import { MdLogout } from "react-icons/md";
 import toast from "react-hot-toast";
 import {useMutation, useQuery} from "@apollo/client";
 import {LOGOUT} from "../graphql/mutations/user.mutation.js";
+import {GET_TRANSACTION_STATISTICS} from "../graphql/queries/transaction.query.js";
+import {useEffect, useState} from "react";
+import {GET_AUTHENTICATED_USER} from "../graphql/queries/user.query.js";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
+
+// const chartData = {
+// 	labels: ["Saving", "Expense", "Investment"],
+// 	datasets: [
+// 		{
+// 			label: "%",
+// 			data: [13, 8, 3],
+// 			backgroundColor: ["rgba(75, 192, 192)", "rgba(255, 99, 132)", "rgba(54, 162, 235)"],
+// 			borderColor: ["rgba(75, 192, 192)", "rgba(255, 99, 132)", "rgba(54, 162, 235, 1)"],
+// 			borderWidth: 1,
+// 			borderRadius: 15,
+// 			spacing: 10,
+// 			cutout: 130,
+// 		},
+// 	],
+// };
+
 const HomePage = () => {
 
-	const chartData = {
-		labels: ["Saving", "Expense", "Investment"],
-		datasets: [
-			{
-				label: "%",
-				data: [13, 8, 3],
-				backgroundColor: ["rgba(75, 192, 192)", "rgba(255, 99, 132)", "rgba(54, 162, 235)"],
-				borderColor: ["rgba(75, 192, 192)", "rgba(255, 99, 132)", "rgba(54, 162, 235, 1)"],
-				borderWidth: 1,
-				borderRadius: 15,
-				spacing: 10,
-				cutout: 130,
-			},
-		],
-	};
+	const {data} = useQuery(GET_TRANSACTION_STATISTICS);
+	const {data:authUserData} = useQuery(GET_AUTHENTICATED_USER);
 
-	const [logout, {loading}] = useMutation(LOGOUT,{
+	const [logout, {loading, client}] = useMutation(LOGOUT,{
 		refetchQueries: ['GetAuthenticatedUser']
 	});
+
+const [chartData, setChartData] = useState({
+	labels: ["Saving", "Expense", "Investment"],
+	datasets: [
+		{
+			label: "$",
+			data: [],
+			backgroundColor: [],
+			borderColor: [],
+			borderWidth: 1,
+			borderRadius: 15,
+			spacing: 10,
+			cutout: 130,
+		},
+	],
+});
+
+	useEffect(() => {
+		if(data?.categoryStatistics) {
+			const categories = data.categoryStatistics.map(stat => stat.category);
+			const totalAmount = data.categoryStatistics.map(stat => stat.totalAmount);
+			const backgroundColor = []
+			const borderColor = []
+			categories.forEach((category) => {
+				if(category === "saving") {
+					backgroundColor.push("rgba(75, 192, 192)");
+					borderColor.push("rgba(75, 192, 192)");
+				}else if(category === "expense") {
+					backgroundColor.push("rgba(255, 99, 132)");
+					borderColor.push("rgba(255, 99, 132)");
+				}else if(category === "investment") {
+					backgroundColor.push("rgba(54, 162, 235)");
+					borderColor.push("rgba(54, 162, 235, 1)");
+				}
+			})
+			setChartData(prev => ({
+				labels: categories,
+				datasets: [
+					{
+						...prev.datasets[0],
+						data: totalAmount,
+						backgroundColor: backgroundColor,
+						borderColor: borderColor
+					}
+				],
+			}))
+		}
+	}, [data]);
+
 
 	const handleLogout = async() => {
 		try {
 			await logout()
+			client.resetStore()
 		} catch (err) {
 			console.error('Error logging out:', err);
 			toast.error(err.message);
@@ -51,7 +108,7 @@ const HomePage = () => {
 						Spend wisely, track wisely
 					</p>
 					<img
-						src={"https://tecdn.b-cdn.net/img/new/avatars/2.webp"}
+						src={authUserData?.authUser.profilePicture}
 						className='w-11 h-11 rounded-full border cursor-pointer'
 						alt='Avatar'
 					/>
@@ -60,13 +117,14 @@ const HomePage = () => {
 					{loading && <div className='w-6 h-6 border-t-2 border-b-2 mx-2 rounded-full animate-spin'></div>}
 				</div>
 				<div className='flex flex-wrap w-full justify-center items-center gap-6'>
-					<div className='h-[330px] w-[330px] md:h-[360px] md:w-[360px]  '>
-						<Doughnut data={chartData} />
-					</div>
-
-					<TransactionForm />
+					{data?.categoryStatistics.length > 0 && (
+						<div className='h-[330px] w-[330px] md:h-[360px] md:w-[360px]  '>
+							<Doughnut data={chartData}/>
+						</div>
+					)}
+					<TransactionForm/>
 				</div>
-				<Cards />
+				<Cards/>
 			</div>
 		</>
 	);
